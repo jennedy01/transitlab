@@ -1,0 +1,47 @@
+# ---------------------------------------------------------------------------
+# Fly.io config — TRANSITLAB API.
+#
+# This deploys the Express API (Dockerfile at repo root). The database is a
+# separate Fly app; see deploy/db.fly.toml and deploy/README.md.
+#
+# Migrations run automatically on each deploy (idempotent). Seeding is a manual
+# one-off — see deploy/README.md.
+# ---------------------------------------------------------------------------
+app = "transitlab-api"
+primary_region = "lhr"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  PORT = "8080"
+  NODE_ENV = "production"
+  # Set to your deployed frontend origin (the Vercel URL).
+  CORS_ORIGIN = "https://transitlab.vercel.app"
+
+[deploy]
+  # Apply database migrations before the new release goes live. Idempotent.
+  release_command = "node_modules/.bin/tsx server/src/db/migrate.ts"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = "stop"
+  auto_start_machines = true
+  min_machines_running = 0
+
+  [[http_service.checks]]
+    method = "GET"
+    path = "/api/health"
+    interval = "15s"
+    timeout = "5s"
+    grace_period = "20s"
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "512mb"
+
+# Secrets (NOT stored here — set with `fly secrets set`):
+#   DATABASE_URL=postgres://transitlab:<password>@transitlab-db.flycast:5432/transitlab
+#   JWT_SECRET=<a long random string>
+#   TFL_APP_KEY=<optional, only needed to re-seed TfL data>

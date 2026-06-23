@@ -1,0 +1,19 @@
+# Keep the backend image build context small.
+**/node_modules
+**/dist
+**/.cache
+**/.data
+**/*.tsbuildinfo
+.git
+.github
+*.log
+.env
+.env.*
+!.env.example
+.vercel
+.pgdata
+# Frontend source isn't needed in the API image (only client/package.json is,
+# so the npm workspaces config resolves).
+client/src
+client/public
+client/index.html

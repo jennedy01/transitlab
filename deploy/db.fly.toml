@@ -1,0 +1,40 @@
+# ---------------------------------------------------------------------------
+# Fly.io config — TRANSITLAB database (PostgreSQL + PostGIS + pgRouting).
+#
+# Uses the same image as docker-compose. This is NOT Fly's managed Postgres
+# (which lacks PostGIS/pgRouting) — it's the pgrouting image run as a Fly app,
+# reachable privately at  transitlab-db.flycast:5432  /  transitlab-db.internal.
+#
+# Deploy from the repo root:
+#   fly apps create transitlab-db
+#   fly volumes create pgdata --size 3 -a transitlab-db -r lhr
+#   fly secrets set POSTGRES_PASSWORD=<password> -a transitlab-db
+#   fly deploy -c deploy/db.fly.toml -a transitlab-db
+# ---------------------------------------------------------------------------
+app = "transitlab-db"
+primary_region = "lhr"
+
+[build]
+  image = "pgrouting/pgrouting:16-3.5-3.8"
+
+[env]
+  POSTGRES_DB = "transitlab"
+  POSTGRES_USER = "transitlab"
+  PGDATA = "/var/lib/postgresql/data/pgdata"
+
+[mounts]
+  source = "pgdata"
+  destination = "/var/lib/postgresql/data"
+
+# Postgres listens on 5432 (all interfaces). No public service / IP is allocated,
+# so it is reachable only from other apps in this Fly org over private networking.
+[[services]]
+  internal_port = 5432
+  protocol = "tcp"
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+[[vm]]
+  size = "shared-cpu-1x"
+  memory = "1gb"
