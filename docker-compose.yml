@@ -1,0 +1,40 @@
+# TRANSITLAB local database.
+#
+# Spins up PostgreSQL with the PostGIS and pgRouting extensions, so the user
+# does not need a local Postgres install. The image bundles all three.
+#
+#   docker compose up -d db      # start
+#   docker compose logs -f db    # watch boot
+#   docker compose down          # stop (data persists in the named volume)
+#   docker compose down -v       # stop and wipe the database volume
+#
+# Connection (from the host): postgresql://transitlab:transitlab@localhost:5432/transitlab
+
+services:
+  db:
+    # pgrouting/pgrouting bundles PostgreSQL 16 + PostGIS 3.5 + pgRouting 3.8.
+    image: pgrouting/pgrouting:16-3.5-3.8
+    # The published image is amd64-only; on Apple Silicon it runs under emulation.
+    platform: linux/amd64
+    container_name: transitlab-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: transitlab
+      POSTGRES_USER: transitlab
+      POSTGRES_PASSWORD: transitlab
+      # Speeds up first boot; we are not running this in production.
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      - transitlab_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U transitlab -d transitlab"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 30s
+
+volumes:
+  transitlab_pgdata:
+    name: transitlab_pgdata

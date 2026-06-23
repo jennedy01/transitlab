@@ -1,0 +1,9 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "//": "Deploys the client SPA. The Express API + PostGIS/pgRouting database are NOT deployed here — host them separately and point VITE_API_BASE at that backend (set it as a Vercel Environment Variable).",
+  "installCommand": "npm install",
+  "buildCommand": "npm run build -w @transitlab/client",
+  "outputDirectory": "client/dist",
+  "framework": null,
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
