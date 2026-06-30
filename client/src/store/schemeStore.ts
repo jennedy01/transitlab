@@ -228,9 +228,13 @@ export const useSchemeStore = create<SchemeState>((set, get) => {
       const scheme = get().activeScheme;
       if (!scheme || coordinates.length < 2) return null;
       const idx = scheme.lines.length;
+      // Pick the first palette colour not already used; fall back to cycling.
+      const used = new Set(scheme.lines.map((l) => l.colour.toLowerCase()));
+      const colour =
+        LINE_PALETTE.find((c) => !used.has(c.toLowerCase())) ?? LINE_PALETTE[idx % LINE_PALETTE.length];
       const body: LineUpsertRequest = {
         name: `Line ${idx + 1}`,
-        colour: LINE_PALETTE[idx % LINE_PALETTE.length],
+        colour,
         mode: 'heavy_rail',
         gaugeMm: 1435,
         electrification: 'ohle_25kv',
@@ -263,11 +267,20 @@ export const useSchemeStore = create<SchemeState>((set, get) => {
     },
 
     updateLineGeometry: (lineId, coordinates) => {
-      patchLine(lineId, (l) => ({
-        ...l,
-        geom: { type: 'LineString', coordinates },
-        segments: localSegments(lineId, coordinates, l.segments),
-      }));
+      patchLine(lineId, (l) => {
+        // Preserve each station's fractional position as the line length changes,
+        // so stations don't drift on the next persist (which derives fraction
+        // from chainage / length).
+        const oldTotal = lineLength((l.geom?.coordinates ?? []) as LngLat[]);
+        const newTotal = lineLength(coordinates);
+        const ratio = oldTotal > 0 ? newTotal / oldTotal : 1;
+        return {
+          ...l,
+          geom: { type: 'LineString', coordinates },
+          segments: localSegments(lineId, coordinates, l.segments),
+          stations: l.stations.map((st) => ({ ...st, chainageM: st.chainageM * ratio })),
+        };
+      });
       schedulePersist(lineId);
     },
 

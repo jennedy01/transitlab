@@ -46,6 +46,13 @@ app.use('/api/schemes', schemesRouter);
 app.use('/api', linesRouter); // POST /schemes/:id/lines, PUT/DELETE /lines/:id
 app.use('/api/analysis', analysisRouter);
 
+if (env.jwtSecret === 'dev-only-change-me') {
+  console.warn(
+    '[server] WARNING: JWT_SECRET is the insecure default. Set a strong JWT_SECRET ' +
+      'before exposing this API publicly — tokens can otherwise be forged.',
+  );
+}
+
 app.listen(env.port, () => {
   console.log(`[server] TRANSITLAB API listening on http://localhost:${env.port}`);
 });

@@ -35,6 +35,7 @@ export function MapView() {
   const selectionLineId = selection?.lineId ?? null;
   const analysisResult = useAnalysisStore((s) => s.result);
   const connectivity = useAnalysisStore((s) => s.connectivity);
+  const analysisLineId = useAnalysisStore((s) => s.lineId);
 
   // Create the map once.
   useEffect(() => {
@@ -198,16 +199,22 @@ export function MapView() {
     void refreshPopulation(map);
   }, [visibility.population, ready]);
 
-  // Push analysis results to the map overlays.
+  // Push analysis results to the map overlays — but only while the analysed
+  // line is still the selected one, so stale overlays don't linger after the
+  // user selects a different line.
   useEffect(() => {
     const map = mapRef.current;
-    if (map && ready) renderAnalysis(map, analysisResult);
-  }, [analysisResult, ready]);
+    if (!map || !ready) return;
+    const current = analysisLineId && analysisLineId === selectionLineId;
+    renderAnalysis(map, current ? analysisResult : null);
+  }, [analysisResult, analysisLineId, selectionLineId, ready]);
 
   useEffect(() => {
     const map = mapRef.current;
-    if (map && ready) renderConnectivity(map, connectivity);
-  }, [connectivity, ready]);
+    if (!map || !ready) return;
+    const current = analysisLineId && analysisLineId === selectionLineId;
+    renderConnectivity(map, current ? connectivity : null);
+  }, [connectivity, analysisLineId, selectionLineId, ready]);
 
   return <div ref={containerRef} className="absolute inset-0" />;
 }

@@ -23,7 +23,8 @@ const lineBody = z.object({
   gaugeMm: z.number().int().positive().max(5000),
   electrification: z.string().max(40),
   rollingStockId: z.string().uuid().nullable().optional(),
-  coordinates: z.array(position).min(2),
+  // Bounded so an oversized payload can't open a long per-edge INSERT loop.
+  coordinates: z.array(position).min(2).max(2000),
   segments: z
     .array(
       z.object({
@@ -32,6 +33,7 @@ const lineBody = z.object({
         maxSpeedKph: z.number().int().positive().max(500).nullable().optional(),
       }),
     )
+    .max(2000)
     .default([]),
   stations: z
     .array(
@@ -43,6 +45,7 @@ const lineBody = z.object({
         stepFree: z.boolean().optional(),
       }),
     )
+    .max(500)
     .default([]),
 });
 

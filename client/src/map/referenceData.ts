@@ -1,5 +1,6 @@
 import type { GeoJSONSource, Map as MlMap } from 'maplibre-gl';
 import { getExistingLines, getExistingStations, getPopulation, type Bbox } from '../lib/api';
+import { useMapStore } from '../store/mapStore';
 
 /**
  * Loads seeded reference data into the map's GeoJSON sources.
@@ -28,8 +29,10 @@ export async function loadExistingNetwork(map: MlMap): Promise<void> {
     ]);
     setSource(map, 'existing-lines', lines);
     setSource(map, 'existing-stations', stations);
+    useMapStore.getState().setDataError(null);
   } catch (err) {
     console.warn('[reference] existing network load failed:', (err as Error).message);
+    useMapStore.getState().setDataError((err as Error).message);
   }
 }
 
@@ -39,5 +42,6 @@ export async function refreshPopulation(map: MlMap): Promise<void> {
     setSource(map, 'population', fc);
   } catch (err) {
     console.warn('[reference] population load failed:', (err as Error).message);
+    useMapStore.getState().setDataError((err as Error).message);
   }
 }

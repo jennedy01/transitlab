@@ -67,7 +67,7 @@ export async function computeCost(lineId: string): Promise<CostResult | null> {
       category: 'structure',
       quantity: round(v.km, 2),
       unit: 'km',
-      ratePerUnit: round(v.cost / v.km, 1),
+      ratePerUnit: v.km > 0 ? round(v.cost / v.km, 1) : 0,
       subtotal: round(v.cost, 1),
       structureType: structureType as CostLineItem['structureType'],
     });
@@ -117,7 +117,7 @@ export async function computeCost(lineId: string): Promise<CostResult | null> {
   return {
     currency: 'GBP',
     total: round(total, 1),
-    perKm: round(total / lengthKm, 1),
+    perKm: lengthKm > 0 ? round(total / lengthKm, 1) : 0,
     lengthKm: round(lengthKm, 2),
     tunnelProportion: round(tunnelProportion, 3),
     overThreshold: tunnelProportion > TUNNEL_FLAG_PROPORTION,

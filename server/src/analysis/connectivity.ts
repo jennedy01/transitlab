@@ -20,11 +20,20 @@ const MIN_PAIR_KM = 2;
 const MAX_PAIR_KM = 35;
 const MAX_LINKS = 8;
 
-let graphReady = false;
+// Memoise the in-flight build so concurrent first requests don't both run the
+// (slow) topology build.
+let graphBuild: Promise<void> | null = null;
 
-/** Build the network graph + topology once (lazy, idempotent). */
-export async function ensureGraph(): Promise<void> {
-  if (graphReady) return;
+/** Build the network graph + topology once (lazy, idempotent, concurrency-safe). */
+export function ensureGraph(): Promise<void> {
+  graphBuild = graphBuild ?? buildGraph().catch((err) => {
+    graphBuild = null; // allow a retry on the next request
+    throw err;
+  });
+  return graphBuild;
+}
+
+async function buildGraph(): Promise<void> {
   const { rows } = await pool.query<{ cnt: number }>('SELECT count(*)::int AS cnt FROM network_edges');
   if (rows[0].cnt === 0) {
     console.log('[connectivity] populating network_edges from existing passenger lines…');
@@ -45,7 +54,6 @@ export async function ensureGraph(): Promise<void> {
     console.log('[connectivity] building pgRouting topology (one-off, may take a minute)…');
     await pool.query(`SELECT pgr_createTopology('network_edges', 0.0001, 'geom', 'id')`);
   }
-  graphReady = true;
 }
 
 interface Centre {
@@ -264,7 +272,10 @@ async function buildProposedEdges(lineId: string): Promise<ProposedEdge[]> {
 
   const edges: ProposedEdge[] = [];
   for (let i = 0; i < coords.length - 1; i += 1) {
-    const cost = segLens.rows[i]?.len ?? 100;
+    const raw = segLens.rows[i]?.len;
+    // Guard against null/0/NaN — these are interpolated into the routing SQL,
+    // and a zero-cost edge would be a free shortcut that corrupts the result.
+    const cost = Number.isFinite(raw) && (raw as number) > 0 ? (raw as number) : 100;
     // Synthetic edge ids well below any real id.
     edges.push({ id: -1000 - i, source: nodeIds[i], target: nodeIds[i + 1], cost });
   }

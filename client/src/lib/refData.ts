@@ -14,12 +14,18 @@ export function useRollingStock(): RollingStock[] {
     }
     inflight =
       inflight ??
-      getRollingStock().then((r) => {
-        cache = r.rollingStock;
-        return cache;
-      });
+      getRollingStock()
+        .then((r) => {
+          cache = r.rollingStock;
+          return cache;
+        })
+        .catch((err) => {
+          // Don't poison the cache: let a later mount retry once the API is up.
+          inflight = null;
+          throw err;
+        });
     let active = true;
-    void inflight.then((rs) => active && setList(rs));
+    inflight.then((rs) => active && setList(rs)).catch(() => {});
     return () => {
       active = false;
     };

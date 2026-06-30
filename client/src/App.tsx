@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { getHealth, type HealthResponse } from './lib/api';
+import { getHealth, API_BASE, type HealthResponse } from './lib/api';
 import { MapView } from './map/MapView';
 import { LayersPanel } from './components/panels/LayersPanel';
 import { useMapStore } from './store/mapStore';
@@ -84,6 +84,7 @@ export function App() {
         <main className="relative min-w-0 flex-1 bg-[#0b0d10]">
           <MapView />
           <Toolbar />
+          <ConnectionBanner />
           <ProfileStrip />
         </main>
         {rightOpen ? (
@@ -93,6 +94,27 @@ export function App() {
         )}
       </div>
       <BottomStrip />
+    </div>
+  );
+}
+
+/** Shown over the map when the API can't be reached (e.g. no backend on a
+ *  static deployment), explaining why the network/data/analysis are empty. */
+function ConnectionBanner() {
+  const reachable = useMapStore((s) => s.apiReachable);
+  if (reachable !== false) return null;
+  return (
+    <div className="pointer-events-none absolute inset-x-0 top-3 z-20 flex justify-center px-3">
+      <div className="pointer-events-auto max-w-xl rounded-[4px] border border-danger/50 bg-surface/95 px-3 py-2 shadow-panel backdrop-blur">
+        <p className="font-sans text-xs font-semibold text-danger">Can’t reach the API</p>
+        <p className="mt-0.5 font-sans text-2xs text-muted">
+          The base map loads, but the existing rail network, population, schemes and analysis all
+          need the backend at{' '}
+          <code className="font-mono text-ink">{API_BASE}</code>. Start it with{' '}
+          <code className="font-mono text-ink">npm run dev</code>, or set{' '}
+          <code className="font-mono text-ink">VITE_API_BASE</code> to a deployed API.
+        </p>
+      </div>
     </div>
   );
 }
@@ -151,16 +173,32 @@ function TopBar() {
 function ServerStatus() {
   const [health, setHealth] = useState<HealthResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const setApiReachable = useMapStore((s) => s.setApiReachable);
 
   useEffect(() => {
     let active = true;
-    getHealth()
-      .then((h) => active && setHealth(h))
-      .catch((e: Error) => active && setError(e.message));
+    const check = () => {
+      getHealth()
+        .then((h) => {
+          if (!active) return;
+          setHealth(h);
+          setError(null);
+          setApiReachable(h.status === 'ok');
+        })
+        .catch((e: Error) => {
+          if (!active) return;
+          setError(e.message);
+          setApiReachable(false);
+        });
+    };
+    check();
+    // Re-poll so a backend that comes up (or goes down) later is reflected.
+    const id = setInterval(check, 15000);
     return () => {
       active = false;
+      clearInterval(id);
     };
-  }, []);
+  }, [setApiReachable]);
 
   const ok = health?.status === 'ok';
   const colour = error ? 'bg-danger' : ok ? 'bg-signal' : 'bg-caution';

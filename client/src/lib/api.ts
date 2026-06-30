@@ -1,6 +1,6 @@
 /** Thin fetch wrapper around the TRANSITLAB API. */
 
-const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:4010';
+export const API_BASE = import.meta.env.VITE_API_BASE ?? 'http://localhost:4010';
 
 export interface HealthResponse {
   status: string;
@@ -17,10 +17,18 @@ export function setAuthToken(token: string | null): void {
 
 export async function apiFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
   const headers = new Headers(init.headers);
-  headers.set('Content-Type', 'application/json');
+  // Only send a JSON content-type when there's actually a body — avoids an
+  // unnecessary CORS preflight on simple GETs.
+  if (init.body != null) headers.set('Content-Type', 'application/json');
   if (authToken) headers.set('Authorization', `Bearer ${authToken}`);
 
-  const res = await fetch(`${API_BASE}${path}`, { ...init, headers });
+  let res: Response;
+  try {
+    res = await fetch(`${API_BASE}${path}`, { ...init, headers });
+  } catch {
+    // Network-level failure (backend unreachable, CORS, DNS). Make it legible.
+    throw new Error(`API unreachable at ${API_BASE} — is the backend running?`);
+  }
   if (!res.ok) {
     let detail = res.statusText;
     try {
