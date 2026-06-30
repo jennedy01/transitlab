@@ -122,6 +122,34 @@ export const OVERLAYS: OverlaySpec[] = [
     },
   },
 
+  /* ---- Former (pre-Beeching) railways ------------------------------------ */
+  {
+    key: 'historic-rail',
+    label: 'Former railways (pre-Beeching)',
+    group: 'existing',
+    toggleable: true,
+    defaultVisible: false,
+    layerIds: ['historic-rail'],
+    attribution: OSM_ATTRIBUTION,
+    add: (map) => {
+      ensureGeoJSON(map, 'historic-lines');
+      if (!map.getLayer('historic-rail')) {
+        map.addLayer({
+          id: 'historic-rail',
+          type: 'line',
+          source: 'historic-lines',
+          layout: { visibility: 'none', 'line-cap': 'round' },
+          paint: {
+            'line-color': '#A6643C', // sepia/rust — evokes a historic map, reads on the light base
+            'line-width': ['interpolate', ['linear'], ['zoom'], 6, 0.9, 13, 2.4],
+            'line-dasharray': [3, 2],
+            'line-opacity': 0.9,
+          },
+        });
+      }
+    },
+  },
+
   /* ---- Existing network: freight ----------------------------------------- */
   {
     key: 'existing-freight',

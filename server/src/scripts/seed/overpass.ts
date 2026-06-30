@@ -16,7 +16,7 @@ import { env } from '../../env.js';
 import { cached } from './cache.js';
 import { bulkUpsert, fetchTextRetry, isMain, lineStringGeoJSON, pointGeoJSON, sleep } from './util.js';
 
-interface Region {
+export interface Region {
   key: string;
   name: string;
   /** [south, west, north, east] */
@@ -24,7 +24,7 @@ interface Region {
 }
 
 /** Regional grid covering Great Britain (kept coarse to limit query count). */
-const REGIONS: Region[] = [
+export const REGIONS: Region[] = [
   { key: 'london', name: 'Greater London', bbox: [51.25, -0.55, 51.72, 0.32] },
   { key: 'south_east', name: 'South East', bbox: [50.7, -1.0, 51.8, 1.5] },
   { key: 'south_west', name: 'South West', bbox: [49.9, -5.8, 51.7, -1.0] },

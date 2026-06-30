@@ -14,6 +14,7 @@
     "seed:population": "tsx src/scripts/seed/ons-population.ts",
     "seed:tfl": "tsx src/scripts/seed/tfl.ts",
     "seed:overpass": "tsx src/scripts/seed/overpass.ts",
+    "seed:historic": "tsx src/scripts/seed/overpass-historic.ts",
     "seed:demo": "tsx src/scripts/seed/demo-scheme.ts"
   },
   "dependencies": {

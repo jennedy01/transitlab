@@ -71,6 +71,10 @@ export function getPopulation(bbox: Bbox): Promise<GeoJSONFC> {
   return apiFetch<GeoJSONFC>(`/api/reference/population${bboxParam(bbox)}`);
 }
 
+export function getHistoricLines(bbox?: Bbox): Promise<GeoJSONFC> {
+  return apiFetch<GeoJSONFC>(`/api/reference/historic-lines${bboxParam(bbox)}`);
+}
+
 /* ----- Auth ---------------------------------------------------------------- */
 
 import type {

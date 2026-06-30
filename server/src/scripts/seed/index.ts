@@ -11,6 +11,7 @@ import { seedRollingStock } from './rolling-stock.js';
 import { seedPopulation } from './ons-population.js';
 import { seedTfl } from './tfl.js';
 import { seedOverpass } from './overpass.js';
+import { seedHistoric } from './overpass-historic.js';
 import { seedDemoScheme } from './demo-scheme.js';
 
 async function run(): Promise<void> {
@@ -32,7 +33,14 @@ async function run(): Promise<void> {
     await seedOverpass();
   }
 
-  console.log('\n=== 5/5 demo scheme ===');
+  if (process.env.SKIP_OVERPASS === '1') {
+    console.log('\n=== 5/6 Historic railways — SKIPPED (SKIP_OVERPASS=1) ===');
+  } else {
+    console.log('\n=== 5/6 Historic (former) railways ===');
+    await seedHistoric();
+  }
+
+  console.log('\n=== 6/6 demo scheme ===');
   await seedDemoScheme();
 
   console.log(`\n[seed] all done in ${((Date.now() - t0) / 1000).toFixed(0)}s`);

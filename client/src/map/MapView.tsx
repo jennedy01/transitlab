@@ -4,7 +4,7 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { buildBaseStyle, UK_BOUNDS, UK_CENTER, UK_ZOOM } from './style';
 import { OVERLAYS } from './overlays';
 import { useMapStore } from '../store/mapStore';
-import { loadExistingNetwork, refreshPopulation } from './referenceData';
+import { loadExistingNetwork, refreshPopulation, refreshHistoric } from './referenceData';
 import { useSchemeStore } from '../store/schemeStore';
 import { useEditorStore } from '../store/editorStore';
 import { renderScheme } from './schemeRender';
@@ -132,8 +132,10 @@ export function MapView() {
     map.on('moveend', () => {
       clearTimeout(refreshTimer);
       refreshTimer = setTimeout(() => {
+        const vis = useMapStore.getState().visibility;
         void loadExistingNetwork(map);
-        if (useMapStore.getState().visibility.population) void refreshPopulation(map);
+        if (vis.population) void refreshPopulation(map);
+        if (vis['historic-rail']) void refreshHistoric(map);
       }, 250);
     });
 
@@ -198,6 +200,13 @@ export function MapView() {
     if (!map || !ready || !visibility.population) return;
     void refreshPopulation(map);
   }, [visibility.population, ready]);
+
+  // Fetch former railways the first time their layer is enabled.
+  useEffect(() => {
+    const map = mapRef.current;
+    if (!map || !ready || !visibility['historic-rail']) return;
+    void refreshHistoric(map);
+  }, [visibility, ready]);
 
   // Push analysis results to the map overlays — but only while the analysed
   // line is still the selected one, so stale overlays don't linger after the

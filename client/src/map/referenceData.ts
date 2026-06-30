@@ -1,5 +1,11 @@
 import type { GeoJSONSource, Map as MlMap } from 'maplibre-gl';
-import { getExistingLines, getExistingStations, getPopulation, type Bbox } from '../lib/api';
+import {
+  getExistingLines,
+  getExistingStations,
+  getHistoricLines,
+  getPopulation,
+  type Bbox,
+} from '../lib/api';
 import { useMapStore } from '../store/mapStore';
 
 /**
@@ -43,5 +49,14 @@ export async function refreshPopulation(map: MlMap): Promise<void> {
   } catch (err) {
     console.warn('[reference] population load failed:', (err as Error).message);
     useMapStore.getState().setDataError((err as Error).message);
+  }
+}
+
+export async function refreshHistoric(map: MlMap): Promise<void> {
+  try {
+    const fc = await getHistoricLines(currentBbox(map));
+    setSource(map, 'historic-lines', fc);
+  } catch (err) {
+    console.warn('[reference] historic railways load failed:', (err as Error).message);
   }
 }

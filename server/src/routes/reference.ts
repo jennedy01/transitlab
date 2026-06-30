@@ -96,6 +96,43 @@ referenceRouter.get('/existing-stations', async (req, res) => {
 });
 
 /**
+ * Former ("pre-Beeching") railways as GeoJSON — abandoned/disused/dismantled
+ * lines from OSM. Viewport-scoped + capped + simplified for transfer.
+ */
+referenceRouter.get('/historic-lines', async (req, res) => {
+  const bbox = parseBbox(req.query.bbox);
+  const params: unknown[] = [];
+  let where = '';
+  if (bbox) {
+    where = 'WHERE geom && ST_MakeEnvelope($1,$2,$3,$4,4326)';
+    params.push(bbox[0], bbox[1], bbox[2], bbox[3]);
+  }
+  try {
+    const { rows } = await pool.query<{ fc: unknown }>(
+      `WITH src AS (
+         SELECT id, name, kind, ST_SimplifyPreserveTopology(geom, 0.0002) AS geom
+         FROM historic_lines ${where}
+         ORDER BY ST_Length(geom) DESC
+         LIMIT 4000
+       )
+       SELECT jsonb_build_object(
+         'type','FeatureCollection',
+         'features', COALESCE(jsonb_agg(jsonb_build_object(
+           'type','Feature',
+           'geometry', ST_AsGeoJSON(geom)::jsonb,
+           'properties', jsonb_build_object('id', id, 'name', name, 'kind', kind)
+         )), '[]'::jsonb)
+       ) AS fc
+       FROM src`,
+      params,
+    );
+    res.json(rows[0].fc);
+  } catch (err) {
+    res.status(500).json({ error: 'historic-lines failed', detail: (err as Error).message });
+  }
+});
+
+/**
  * Population areas (LSOA) as GeoJSON, bbox-filtered (required — the national set
  * is ~35k polygons). Returns density (persons/ha) and population per area.
  */

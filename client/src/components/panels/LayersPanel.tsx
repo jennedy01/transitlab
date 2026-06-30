@@ -6,6 +6,7 @@ import { hasMapTiler } from '../../map/style';
 /** Representative swatch colour for each toggle (matches the map styling). */
 const SWATCHES: Record<string, string | undefined> = {
   population: '#22a884',
+  'historic-rail': '#A6643C',
   'existing-freight': '#8a6d3b',
   'existing-rail': '#5b6b7a',
   'existing-metro': '#3a86a8',
