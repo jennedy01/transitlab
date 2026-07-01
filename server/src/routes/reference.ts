@@ -42,7 +42,16 @@ referenceRouter.get('/existing-lines', async (req, res) => {
              ELSE 'rail'
            END AS modegroup,
            ST_SimplifyPreserveTopology(geom, 0.0002) AS geom
-         FROM existing_lines ${where}
+         FROM existing_lines
+         ${where ? where + ' AND' : 'WHERE'}
+           -- Within Greater London, TfL is authoritative for the metro network,
+           -- so drop the overlapping OSM subway/DLR/tram (untidy split geometry
+           -- that otherwise tangles over the clean TfL lines).
+           NOT (
+             source = 'osm'
+             AND mode IN ('metro_tube','light_rail','tram')
+             AND geom && ST_MakeEnvelope(-0.55, 51.28, 0.34, 51.70, 4326)
+           )
          -- Prioritise longer/main alignments; drops tiny sidings first under cap.
          ORDER BY ST_Length(geom) DESC
          LIMIT 4000

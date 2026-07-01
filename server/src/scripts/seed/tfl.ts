@@ -30,7 +30,7 @@ const LINE_COLOURS: Record<string, string> = {
   bakerloo: '#B36305', central: '#E32017', circle: '#FFD300', district: '#00782A',
   'hammersmith-city': '#F3A9BB', jubilee: '#A0A5A9', metropolitan: '#9B0056',
   northern: '#000000', piccadilly: '#003688', victoria: '#0098D4',
-  'waterloo-city': '#95CDBA', 'elizabeth-line': '#6950A1', dlr: '#00A4A7',
+  'waterloo-city': '#95CDBA', 'elizabeth-line': '#6950A1', elizabeth: '#6950A1', dlr: '#00A4A7',
   tram: '#84B817', 'london-overground': '#EE7C0E', liberty: '#5D6061',
   lioness: '#FAA61A', mildmay: '#0077AD', suffragette: '#18A95D',
   weaver: '#823A62', windrush: '#ED1B00',

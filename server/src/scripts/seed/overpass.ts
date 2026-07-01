@@ -28,6 +28,11 @@ export const REGIONS: Region[] = [
   { key: 'london', name: 'Greater London', bbox: [51.25, -0.55, 51.72, 0.32] },
   { key: 'south_east', name: 'South East', bbox: [50.7, -1.0, 51.8, 1.5] },
   { key: 'south_west', name: 'South West', bbox: [49.9, -5.8, 51.7, -1.0] },
+  // Filler tiles closing the central-England gap between SW/SE/Midlands
+  // (Oxford, Banbury, Milton Keynes, the Cotswolds, Gloucester). Overlap their
+  // neighbours; duplicates are deduped on (source, source_id).
+  { key: 'thames_chiltern', name: 'Thames Valley & Chilterns', bbox: [51.4, -1.7, 52.5, -0.4] },
+  { key: 'cotswold_severn', name: 'Cotswolds & Severn', bbox: [51.3, -2.9, 52.5, -1.5] },
   { key: 'east', name: 'East of England', bbox: [51.8, -0.6, 53.0, 1.8] },
   { key: 'midlands_w', name: 'West Midlands', bbox: [51.9, -3.2, 53.2, -1.0] },
   { key: 'midlands_e', name: 'East Midlands', bbox: [52.4, -1.0, 53.6, 0.4] },
